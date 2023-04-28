@@ -1,0 +1,237 @@
+import 'dart:async';
+import 'dart:developer';
+
+import 'package:bio_if/cadastro.dart';
+import 'package:bio_if/especies.dart';
+import 'package:bio_if/postagem.dart';
+import 'package:bio_if/sobre.dart';
+import 'package:bio_if/login.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+
+import 'ajuda.dart';
+
+//listagem das especies
+class Home extends StatefulWidget {
+  const Home({super.key});
+
+  @override
+  State<Home> createState() => _HomeState();
+}
+
+class _HomeState extends State<Home> {
+  //List<Object> _postagemLista = [];
+  var db = FirebaseFirestore.instance;
+  final _controller = StreamController<QuerySnapshot>.broadcast();
+  int count = 0;
+  String? _statusLogin = "";
+  List<String> itensMenu = [
+    "Login",
+    "Cadastro",
+    "Cadastro de Espécies",
+    "Sobre",
+    "Ajuda",
+    "Sair"
+  ];
+
+  _escolhaMenuItem(String itemEscolhido) {
+    switch (itemEscolhido) {
+      case "Login":
+        Navigator.push(
+            context, MaterialPageRoute(builder: (context) => const Login()));
+        break;
+      case "Cadastro":
+        Navigator.push(
+            context, MaterialPageRoute(builder: (context) => const Cadastro()));
+        break;
+      case "Cadastro de Espécies":
+        Navigator.push(
+            context, MaterialPageRoute(builder: (context) => const Especies()));
+        break;
+      case "Sobre":
+        Navigator.push(
+            context, MaterialPageRoute(builder: (context) => const Sobre()));
+        break;
+      case "Ajuda":
+        Navigator.push(
+            context, MaterialPageRoute(builder: (context) => const Ajuda()));
+        break;
+      case "Sair":
+        SystemNavigator.pop();
+        break;
+      default:
+    }
+  }
+
+  //nao ta funcionando
+  Future _usuarioAtual() async {
+    var auth = FirebaseAuth.instance;
+
+    try {
+      var usuarioAtual = await auth.currentUser;
+      if (usuarioAtual != null) {
+        setState(() {
+          _statusLogin = "Usuário logado: ${usuarioAtual.email}";
+        });
+      }
+    } catch (e) {
+      _statusLogin = "Usuário não logado";
+    }
+  }
+
+  //nao ta funcionando
+  Future _like() async {
+    db.collection("Postagem").doc().update({"like": FieldValue.increment(1)});
+  }
+
+  //nao ta funcionando
+  Future _dislike() async {
+    db
+        .collection("Postagem")
+        .doc()
+        .update({"dislike": FieldValue.increment(1)});
+  }
+
+  Stream<QuerySnapshot>? _adicionarListenerPostagem() {
+    final stream = db
+        .collection("Postagem")
+        .orderBy("data", descending: false)
+        .snapshots();
+
+    stream.listen((dados) {
+      _controller.add(dados);
+    });
+  }
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    _adicionarListenerPostagem();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+        appBar: AppBar(
+          backgroundColor: Colors.teal,
+          iconTheme: const IconThemeData(
+            color: Colors.white,
+          ),
+          title: Text("Bio IF - "),
+          /*Image.asset(
+          'imagens/logo.png',
+          height: 22,
+        ),*/
+          actions: [
+            PopupMenuButton(
+              itemBuilder: (context) {
+                return itensMenu.map((String item) {
+                  return PopupMenuItem(value: item, child: Text(item));
+                }).toList();
+              },
+              onSelected: _escolhaMenuItem,
+            )
+          ],
+        ),
+        body: SingleChildScrollView(
+          child: Column(
+            children: [
+              StreamBuilder(
+                  stream: _controller.stream,
+                  builder: (BuildContext context,
+                      AsyncSnapshot<QuerySnapshot> snapshot) {
+                    QuerySnapshot<Object?>? querySnapshot = snapshot.data;
+                    if (snapshot.hasData) {
+                      return ListView.builder(
+                        shrinkWrap: true,
+                        primary: false,
+                        itemCount: querySnapshot!.docs.length,
+                        itemBuilder: (context, index) {
+                          List<DocumentSnapshot> postagem =
+                              querySnapshot.docs.toList();
+                          DocumentSnapshot item = postagem[index];
+                          return Column(children: [
+                            Container(
+                              margin: const EdgeInsets.all(5),
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                item[index]['nome'],
+                                style: const TextStyle(
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                            Container(
+                              margin: const EdgeInsets.all(5),
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                "${item[index]['descricao']}",
+                              ),
+                            ),
+                            Container(
+                              margin: const EdgeInsets.all(5),
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                "${item[index]['tipo']}",
+                              ),
+                            ),
+                            Container(
+                              margin: const EdgeInsets.all(20),
+                              alignment: Alignment.center,
+                              child: Image.network(
+                                item[index]['foto'],
+                              ),
+                            ),
+                            Container(
+                                alignment: Alignment.center,
+                                child: Text(
+                                  "Data: ${item[index]['data e hora']}",
+                                )),
+                            Row(
+                              children: [
+                                IconButton(
+                                    onPressed: () {
+                                      _like;
+                                    },
+                                    icon: const Icon(Icons.favorite)),
+                                Container(
+                                    alignment: Alignment.center,
+                                    child: Text(
+                                      item[index]['like'].toString(),
+                                    )),
+                                IconButton(
+                                    onPressed: _dislike,
+                                    icon: const Icon(Icons.heart_broken_sharp)),
+                                Container(
+                                    alignment: Alignment.center,
+                                    child: Text(
+                                      item[index]['dislike'].toString(),
+                                    )),
+                              ],
+                            ),
+                            Divider(
+                              color: Colors.black,
+                              indent: 20,
+                              endIndent: 20,
+                            )
+                          ]);
+                        },
+                      );
+                    } else {
+                      return const Padding(
+                          padding: EdgeInsets.all(150),
+                          child: Center(
+                            child: CircularProgressIndicator(),
+                          ));
+                    }
+                  }),
+            ],
+          ),
+        ));
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "342696241074",
+    "project_id": "bioif-39a18",
+    "storage_bucket": "bioif-39a18.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:342696241074:android:5685ee6aae49dc84c526ab",
+        "android_client_info": {
+          "package_name": "com.example.bio_if"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "342696241074-vm7jmi6vgev78djkte4bqkifthj06ehu.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCv3QpVCFHa7Q4TDHyXdr8TBDMAlY3ZqYk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "342696241074-vm7jmi6vgev78djkte4bqkifthj06ehu.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
